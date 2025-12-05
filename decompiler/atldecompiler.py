@@ -20,7 +20,7 @@
 
 from .util import DecompilerBase, WordConcatenator, Dispatcher
 
-import renpy
+import renpy # noqa
 
 def pprint(out_file, ast, options,
            indent_level=0, linenumber=1, skip_indent_until_write=False):

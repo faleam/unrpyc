@@ -207,7 +207,7 @@ class First:
     # of a loop something special has to be done. This class
     # provides an easy object which on the first access
     # will return True, but any subsequent accesses False
-    def __init__(self, yes_value=True, no_value=False):
+    def __init__(self, yes_value:bool|str=True, no_value:bool|str=False):
         self.yes_value = yes_value
         self.no_value = no_value
         self.first = True
@@ -362,7 +362,7 @@ def reconstruct_arginfo(arginfo):
     rv = ["("]
     sep = First("", ", ")
 
-    if hasattr(arginfo, 'starred_indexes'):
+    if hasattr(arginfo, 'starred_indexes') or not hasattr(arginfo, 'extrapos'):
         # ren'py 7.5 and above, PEP 448 compliant
         for i, (name, val) in enumerate(arginfo.arguments):
             rv.append(sep())
@@ -392,7 +392,7 @@ def reconstruct_arginfo(arginfo):
 
     return "".join(rv)
 
-def string_escape(s):  # TODO see if this needs to work like encode_say_string elsewhere
+def string_escape(s):  # TODO: see if this needs to work like encode_say_string elsewhere
     s = s.replace('\\', '\\\\')
     s = s.replace('"', '\\"')
     s = s.replace('\n', '\\n')
@@ -400,10 +400,10 @@ def string_escape(s):  # TODO see if this needs to work like encode_say_string e
     return s
 
 # keywords used by ren'py's parser
-KEYWORDS = set(['$', 'as', 'at', 'behind', 'call', 'expression', 'hide',
+KEYWORDS = {'$', 'as', 'at', 'behind', 'call', 'expression', 'hide',
                 'if', 'in', 'image', 'init', 'jump', 'menu', 'onlayer',
                 'python', 'return', 'scene', 'set', 'show', 'with',
-                'while', 'zorder', 'transform'])
+                'while', 'zorder', 'transform'}
 
 word_regexp = '[a-zA-Z_\u00a0-\ufffd][0-9a-zA-Z_\u00a0-\ufffd]*'
 
@@ -637,7 +637,7 @@ def encode_say_string(s):
 def say_get_code(ast, inmenu=False):
     rv = []
 
-    if ast.who:
+    if getattr(ast, 'who', None):
         rv.append(ast.who)
 
     if hasattr(ast, 'attributes') and ast.attributes is not None:
@@ -651,7 +651,7 @@ def say_get_code(ast, inmenu=False):
 
     rv.append(encode_say_string(ast.what))
 
-    if not ast.interact and not inmenu:
+    if not getattr(ast, 'interact', True) and not inmenu:
         rv.append("nointeract")
 
     # explicit_identifier was only added in 7.7/8.2.
@@ -667,7 +667,7 @@ def say_get_code(ast, inmenu=False):
     if hasattr(ast, 'arguments') and ast.arguments is not None:
         rv.append(reconstruct_arginfo(ast.arguments))
 
-    if ast.with_:
+    if getattr(ast, 'with_', None):
         rv.append("with")
         rv.append(ast.with_)
 

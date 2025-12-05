@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 from .util import say_get_code
-import renpy
+import renpy # noqa
 
 import hashlib
 from copy import copy
@@ -95,8 +95,8 @@ class Translator:
             new_ast.linenumber = old_linenumber
             new_block.append(new_ast)
         return new_block
-
-    def walk(self, ast, f):
+    @staticmethod
+    def walk(ast, f):
         if isinstance(
             ast, (renpy.ast.Init, renpy.ast.Label, renpy.ast.While, renpy.ast.Translate,
                   renpy.ast.TranslateBlock)):

@@ -23,11 +23,11 @@ from .util import DecompilerBase, First, reconstruct_paraminfo, \
 
 from . import atldecompiler
 
-from renpy import ui, sl2
-from renpy.ast import PyExpr
-from renpy.text import text
-from renpy.sl2 import sldisplayables as sld
-from renpy.display import layout, behavior, im, motion, dragdrop, transform
+from renpy import ui, sl2 # noqa
+from renpy.ast import PyExpr # noqa
+from renpy.text import text # noqa
+from renpy.sl2 import sldisplayables as sld # noqa
+from renpy.display import layout, behavior, im, motion, dragdrop, transform # noqa
 
 # Main API
 
@@ -150,12 +150,12 @@ class SL2Decompiler(DecompilerBase):
         self.print_nodes(children, 1)
 
     @dispatch(sl2.slast.SLContinue)
-    def print_continue(self, ast):
+    def print_continue(self, _ast):
         self.indent()
         self.write("continue")
 
     @dispatch(sl2.slast.SLBreak)
-    def print_break(self, ast):
+    def print_break(self, _ast):
         self.indent()
         self.write("break")
 
@@ -175,7 +175,7 @@ class SL2Decompiler(DecompilerBase):
             self.write(f'$ {code}')
 
     @dispatch(sl2.slast.SLPass)
-    def print_pass(self, ast):
+    def print_pass(self, _ast):
         # A pass statement
         self.indent()
         self.write("pass")
@@ -201,7 +201,7 @@ class SL2Decompiler(DecompilerBase):
             self.print_block(ast.block)
 
     @dispatch(sl2.slast.SLTransclude)
-    def print_transclude(self, ast):
+    def print_transclude(self, _ast):
         self.indent()
         self.write("transclude")
 
@@ -217,27 +217,27 @@ class SL2Decompiler(DecompilerBase):
         # what statement it represents by analyzing the called displayable and style
         # attributes.
         key = (ast.displayable, ast.style)
-        nameAndChildren = self.displayable_names.get(key)
+        name_and_children = self.displayable_names.get(key)
 
-        if nameAndChildren is None and self.options.sl_custom_names:
+        if name_and_children is None and self.options.sl_custom_names:
             # check if we have a name registered for this displayable
-            nameAndChildren = self.options.sl_custom_names.get(ast.displayable.__name__)
+            name_and_children = self.options.sl_custom_names.get(ast.displayable.__name__)
             self.print_debug(
-                f'Substituted "{nameAndChildren[0]}" as the name for displayable {ast.displayable}')
+                f'Substituted "{name_and_children[0]}" as the name for displayable {ast.displayable}')
 
-        if nameAndChildren is None:
+        if name_and_children is None:
             # This is a (user-defined) displayable we don't know about.
             # fallback: assume the name of the displayable matches the given style
             # this is rather often the case. However, as it may be wrong we have to
             # print a debug message
-            nameAndChildren = (ast.style, 'many')
+            name_and_children = (ast.style, 'many')
             self.print_debug(
     f'''Warning: Encountered a user-defined displayable of type "{ast.displayable}".
     Unfortunately, the name of user-defined displayables is not recorded in the compiled file.
     For now the style name "{ast.style}" will be substituted.
     To check if this is correct, find the corresponding renpy.register_sl_displayable call.''')  # noqa
 
-        (name, children) = nameAndChildren
+        (name, children) = name_and_children
         self.indent()
         self.write(name)
         if ast.positional:
@@ -332,8 +332,8 @@ class SL2Decompiler(DecompilerBase):
         (ui._textbutton, "button"):             ("textbutton", 0),
         (ui._textbutton, 0):                    ("textbutton", 0),
     }
-
-    def sort_keywords_and_children(self, node, immediate_block=False, ignore_children=False):
+    @staticmethod
+    def sort_keywords_and_children(node, immediate_block=False, ignore_children=False):
         # sorts the contents of a SL statement that has keywords and children
         # returns a list of sorted contents.
         #

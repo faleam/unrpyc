@@ -35,10 +35,7 @@ try:
 except:
     pass
 
-if PY3:
-    from io import BytesIO as StringIO
-else:
-    from cStringIO import StringIO
+from io import BytesIO as StringIO
 
 __all__ = [
     "load", "loads", "safe_load", "safe_loads", "safe_dump", "safe_dumps",

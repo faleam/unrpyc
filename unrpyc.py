@@ -34,12 +34,7 @@ import traceback
 import zlib
 from pathlib import Path
 
-try:
-    from multiprocessing import Pool, cpu_count
-except ImportError:
-    # Mock required support when multiprocessing is unavailable
-    def cpu_count():
-        return 1
+from multiprocessing import Pool, cpu_count # multiprocessing just required
 
 import decompiler
 import deobfuscate
@@ -174,10 +169,12 @@ def decompile_rpyc(input_filename, context, overwrite=False, try_harder=False, d
     # Output filename is input filename but with .rpy extension
     if dump:
         ext = '.txt'
-    elif input_filename.suffix == ('.rpyc'):
+    elif input_filename.suffix == '.rpyc':
         ext = '.rpy'
-    elif input_filename.suffix == ('.rpymc'):
+    elif input_filename.suffix == '.rpymc':
         ext = '.rpym'
+    else:
+        raise ValueError(f'Badd suffix for {input_filename}')
     out_filename = input_filename.with_suffix(ext)
 
 
@@ -371,15 +368,15 @@ def main():
         "Defaults to the amount of hw threads available minus one, disabled when muliprocessing "
         "unavailable is.")
 
-    astdump = ap.add_argument_group('astdump options', 'All unrpyc options related to ast-dumping.')
-    astdump.add_argument(
+    local_astdump = ap.add_argument_group('astdump options', 'All unrpyc options related to ast-dumping.')
+    local_astdump.add_argument(
         '-d',
         '--dump',
         dest='dump',
         action='store_true',
         help="Instead of decompiling, pretty print the ast to a file")
 
-    astdump.add_argument(
+    local_astdump.add_argument(
         '--comparable',
         dest='comparable',
         action='store_true',
@@ -387,7 +384,7 @@ def main():
         "This suppresses attributes that are different even when the code is identical, such as "
         "file modification times. ")
 
-    astdump.add_argument(
+    local_astdump.add_argument(
         '--no-pyexpr',
         dest='no_pyexpr',
         action='store_true',
@@ -447,7 +444,7 @@ def main():
 
     def glob_or_complain(inpath):
         """Expands wildcards and casts output to pathlike state."""
-        retval = [Path(elem).resolve(strict=True) for elem in glob.glob(inpath, recursive=True)]
+        retval = [Path(el).resolve(strict=True) for el in glob.glob(inpath, recursive=True)]
         if not retval:
             print(f'Input path not found: {inpath}')
         return retval

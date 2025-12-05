@@ -25,7 +25,7 @@
 from . import magic
 magic.fake_package("renpy")
 import renpy  # noqa
-
+import struct
 import pickletools
 
 
@@ -39,28 +39,28 @@ SPECIAL_CLASSES = [set, frozenset]
 # we don't want to enable that option as we want control over what the pickler is allowed to
 # unpickle
 # so here we define some proxies
-class oldset(set):
+class OldSet(set):
     __module__ = "__builtin__"
 
     def __reduce__(self):
         cls, args, state = super().__reduce__()
-        return (set, args, state)
+        return set, args, state
 
 
-oldset.__name__ = "set"
-SPECIAL_CLASSES.append(oldset)
+OldSet.__name__ = "set"
+SPECIAL_CLASSES.append(OldSet)
 
 
-class oldfrozenset(frozenset):
+class OldFrozenSet(frozenset):
     __module__ = "__builtin__"
 
     def __reduce__(self):
         cls, args, state = super().__reduce__()
-        return (frozenset, args, state)
+        return frozenset, args, state
 
 
-oldfrozenset.__name__ = "frozenset"
-SPECIAL_CLASSES.append(oldfrozenset)
+OldFrozenSet.__name__ = "frozenset"
+SPECIAL_CLASSES.append(OldFrozenSet)
 
 
 @SPECIAL_CLASSES.append
@@ -80,19 +80,76 @@ class PyExpr(magic.FakeStrict, str):
         else:
             return str(self), self.filename, self.linenumber
 
+def hash32(s:str)->int:
 
+    rv = 0x811c9dc5
+    ls = len(s)
+    s = s.encode("u32")[4:]
+    us = struct.unpack(f'{ls}I', s)
+
+    for u in us:
+        rv ^= u
+        rv *= 0x01000193
+
+    return rv & 0xFFFFFFFF
+
+@SPECIAL_CLASSES.append
+class PyExpr(magic.FakeStrict, str):
+    __module__ = "renpy.astsupport"
+
+    def __new__(cls, s, filename, linenumber, py=2, hashcode=None, column=0):
+        self = str.__new__(cls, s)
+        self.filename = filename
+        self.linenumber = linenumber
+        self.py = py
+        self.hashcode = hashcode if hashcode is not None else hash32(s)
+        self.column = column
+        return self
+
+    def __getnewargs__(self):
+        return str(self), self.filename, self.linenumber, self.py, self.hashcode, self.column
 @SPECIAL_CLASSES.append
 class PyCode(magic.FakeStrict):
     __module__ = "renpy.ast"
 
     def __setstate__(self, state):
-        if len(state) == 4:
-            (_, self.source, self.location, self.mode) = state
-            self.py = None
-        else:
-            (_, self.source, self.location, self.mode, self.py) = state
+        source = ''
+        location = ['1','2']
+        mode = None
+        py = 2
+        hashcode = None
+        col_offset = 0
+        match state:
+            case (_, source, location, mode, py, hashcode, col_offset):
+                pass
+            case (_, source, location, mode, py, hashcode):
+                pass
+            case (_, source, location, mode, py):
+                pass
+            case (_, source, location, mode):
+                pass
+            case _:
+                raise Exception(f"Invalid state: {state!r}")
+        self.source = source
+        self.location = location
+        self.filename = location[0]
+        self.linenumber = location[1]
+        self.mode = mode
+        self.py = py
+        self.col_offset = col_offset
+        if hashcode is None:
+            if isinstance(self.source, renpy.astsupport.PyExpr):
+                self.hashcode = self.source.hashcode
+            else:
+                self.hashcode = hash32(self.source)
         self.bytecode = None
 
+@SPECIAL_CLASSES.append
+class GroupedLine(magic.FakeStrict, tuple):
+    __module__ = 'renpy.lexer'
+
+    def __new__(cls, filename, number, indent, text, block):
+        return tuple.__new__(cls, (filename, number, indent, text, block))
 
 @SPECIAL_CLASSES.append
 class Sentinel(magic.FakeStrict):
