@@ -233,8 +233,8 @@ class Decompiler(DecompilerBase):
         self.indent()
         self.write("scene")
 
-        if ast.imspec is None:
-            if isinstance(ast.layer, str):
+        if getattr(ast, 'imspec', None) is None:
+            if isinstance(getattr(ast, 'layer', None), str):
                 self.write(f' onlayer {ast.layer}')
             needs_space = True
         else:
@@ -317,7 +317,7 @@ class Decompiler(DecompilerBase):
             return
 
         # See if we're the label for a menu, rather than a standalone label.
-        if not ast.block and ast.parameters is None:
+        if not getattr(ast, 'block', None) and getattr(ast, 'parameters', None) is None:
             remaining_blocks = len(self.block) - self.index
             next_ast = None # Erroneous referenced before assignment without
             if remaining_blocks > 1:
