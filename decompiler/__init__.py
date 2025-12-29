@@ -166,7 +166,7 @@ class Decompiler(DecompilerBase):
         self.require_init()
         self.indent()
         self.write(f'image {" ".join(ast.imgname)}')
-        if ast.code is not None:
+        if getattr(ast, 'code', None) is not None:
             self.write(f' = {ast.code.source}')
         else:
             if getattr(ast, 'atl', None) is not None:
@@ -373,25 +373,25 @@ class Decompiler(DecompilerBase):
     def print_jump(self, ast):
         self.indent()
         self.write(f'jump {"expression " if getattr(ast, 'expression', False) else ""}{ast.target}')
-
+    # TODO: not sure on fix for from block
     @dispatch(renpy.ast.Call)
     def print_call(self, ast):
         self.indent()
         words = WordConcatenator(False)
         words.append("call")
-        if ast.expression:
+        if getattr(ast, 'expression', None):
             words.append("expression")
         words.append(ast.label)
 
-        if ast.arguments is not None:
-            if ast.expression:
+        if getattr(ast, 'arguments', None) is not None:
+            if getattr(ast, 'expression', None):
                 words.append("pass")
             words.append(reconstruct_arginfo(ast.arguments))
 
         # We don't have to check if there's enough elements here,
         # since a Label or a Pass is always emitted after a Call.
         next_block = self.block[self.index + 1]
-        if isinstance(next_block, renpy.ast.Label):
+        if isinstance(next_block, renpy.ast.Label) and getattr(next_block, 'name', None) is not None:
             words.append(f'from {next_block.name}')
 
         self.write(words.join())
