@@ -25,6 +25,7 @@ from . import atldecompiler
 
 from renpy import ui, sl2 # noqa
 from renpy.ast import PyExpr # noqa
+from renpy.astsupport import PyExpr as PyExprNew
 from renpy.text import text # noqa
 from renpy.sl2 import sldisplayables as sld # noqa
 from renpy.display import layout, behavior, im, motion, dragdrop, transform # noqa
@@ -186,7 +187,7 @@ class SL2Decompiler(DecompilerBase):
         self.indent()
         self.write("use ")
         args = reconstruct_arginfo(ast.args)
-        if isinstance(ast.target, PyExpr):
+        if isinstance(ast.target, (PyExpr, PyExprNew)):
             self.write(f'expression {ast.target}')
             if args:
                 self.write(" pass ")
